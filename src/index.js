@@ -1,8 +1,15 @@
+import { createStore, applyMiddleware } from 'redux';
+import thunkMiddleware from 'redux-thunk';
+import assert from 'assert';
+
+import _ from 'lodash';
+
 /**
  * Helper function to aid in async dispatch testing.
  * @param {Store} store The redux store
  * @param {Function} stateFunc When called, returns the part of the state we care about
  * @param {Function} actionListFunc When called, returns the list of actions
+ * @param {Array} blacklistedActionTypes A list of action types which are ignored
  * @returns {Function} Returns a function which will dispatch an action and take a callback
  * to be executed after the store updates its state. Looks like:
  *   (action, expectedActions) => Promise
@@ -12,7 +19,7 @@
  *   The returned Promise is executed after the number of actions in expectedCalls
  *   is met
  */
-function createDispatchThen(store, stateFunc, actionListFunc) {
+function createDispatchThen(store, stateFunc, actionListFunc, blacklistedActionTypes) {
   let unsubscribe;
   let actionTypesFunc = () => actionListFunc().map(action => action.type).sort();
 
@@ -66,6 +73,7 @@ function createDispatchThen(store, stateFunc, actionListFunc) {
  * @param {Store} store The redux store
  * @param {Function} stateFunc When called, returns the part of the state we care about
  * @param {Function} actionListFunc When called, returns the list of actions
+ * @param {Array} blacklistedActionTypes A list of action types which are ignored
  * @returns {Function} Returns a function:
  *   (expectedActionTypes, callback) => Promise
  * where
@@ -84,7 +92,7 @@ function createDispatchThen(store, stateFunc, actionListFunc) {
  *     });
  *   });
  */
-function createListenForActions(store, stateFunc, actionListFunc) {
+function createListenForActions(store, stateFunc, actionListFunc, blacklistedActionTypes) {
   let unsubscribe;
   let actionTypesFunc = () => actionListFunc().map(action => action.type).sort();
 
@@ -124,4 +132,37 @@ function createListenForActions(store, stateFunc, actionListFunc) {
       return Promise.reject(e);
     });
   };
+}
+
+// Keep a list of actions executed for testing purposes
+const subscriber = subscribe => store => next => action => {
+  if (subscribe !== undefined) {
+    subscribe(action);
+  }
+  return next(action);
+};
+
+export default function configureTestStore(rootReducer, initialState, blacklistedActionTypes = []) {
+  let actionList = [];
+
+  const createStoreWithMiddleware = applyMiddleware(
+    thunkMiddleware,
+    subscriber(action => {
+      actionList = actionList.concat(action);
+    })
+  )(createStore);
+
+  let actionListFunc = () => actionList.filter(
+    action => blacklistedActionTypes.indexOf(action.type) === -1
+  );
+
+  const store = createStoreWithMiddleware(rootReducer, initialState);
+  const identity = state => state;
+  store.createDispatchThen = (stateFunc = identity) => createDispatchThen(
+    store, stateFunc, actionListFunc, blacklistedActionTypes
+  );
+  store.createListenForActions = (stateFunc = identity) => createListenForActions(
+    store, stateFunc, actionListFunc, blacklistedActionTypes
+  );
+  return store;
 }

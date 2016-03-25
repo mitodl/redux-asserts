@@ -8,7 +8,7 @@ Functions to assert dispatched actions in redux
 ## Usage
 In your testing code:
 
-    import { configureTestStore } from 'redux-asserts';
+    import configureTestStore from 'redux-asserts';
 
  - Create a redux store for testing using `configureTestStore`
  - Use that store's `createDispatchThen` and `createListenForActions` functions to assert that actions were called.
