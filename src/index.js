@@ -1,6 +1,5 @@
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
-import assert from 'assert';
 
 import _ from 'lodash';
 
@@ -20,48 +19,13 @@ import _ from 'lodash';
  *   is met
  */
 function createDispatchThen(store, stateFunc, actionListFunc, blacklistedActionTypes) {
-  let unsubscribe;
-  let actionTypesFunc = () => actionListFunc().map(action => action.type).sort();
-
+  let listenForActions = createListenForActions(store, stateFunc, actionListFunc, blacklistedActionTypes);
   return (action, actionTypes) => {
     if (typeof actionTypes !== 'object') {
-      assert(false, "Expected a list of actions for second parameter of dispatchThen");
+      throw new Error("Expected a list of actions for second parameter of dispatchThen");
     }
-    return new Promise(resolve => {
-      // Note: we are not using Sets because we care about preserving duplicate values
-      const expectedActionTypes = Array.from(actionTypes).concat(actionTypesFunc()).sort().filter(
-        type => blacklistedActionTypes.indexOf(type) === -1
-      );
-
-      // If we called this twice unsubscribe the old instance from the store
-      if (unsubscribe !== undefined) {
-        unsubscribe();
-      }
-      if (_.isEqual(expectedActionTypes, actionTypesFunc())) {
-        // No actions expected, run callback now
-        if (action) {
-          store.dispatch(action);
-        }
-        resolve(stateFunc(store.getState()));
-      } else {
-        unsubscribe = store.subscribe(() => {
-          // Get current action list
-          let actionListTypes = actionTypesFunc();
-          if (_.isEqual(actionListTypes, expectedActionTypes)) {
-            resolve(stateFunc(store.getState()));
-          } else if (actionListTypes.length > expectedActionTypes.length) {
-            console.error("Expected actions vs actual", expectedActionTypes, actionListTypes);
-            assert.fail(actionListTypes, expectedActionTypes, "Received more actions than expected");
-          }
-        });
-        if (action) {
-          store.dispatch(action);
-        }
-      }
-    }).catch(e => {
-      // Make sure we don't accidentally silence errors
-      console.error(e);
-      return Promise.reject(e);
+    return listenForActions(actionTypes, () => {
+      store.dispatch(action);
     });
   };
 }
@@ -97,7 +61,13 @@ function createListenForActions(store, stateFunc, actionListFunc, blacklistedAct
   let actionTypesFunc = () => actionListFunc().map(action => action.type).sort();
 
   return (actionTypes, callback) => {
-    return new Promise(resolve => {
+    if (typeof actionTypes !== 'object') {
+      throw new Error("Expected a list of actions for first parameter of listenForActions");
+    }
+    if (typeof callback !== 'function') {
+      throw new Error("Callback argument is required for listenForActions");
+    }
+    return new Promise((resolve, reject) => {
       // Note: we are not using Sets because we care about preserving duplicate values
       const expectedActionTypes = Array.from(actionTypes).concat(actionTypesFunc()).sort().filter(
         type => blacklistedActionTypes.indexOf(type) === -1
@@ -119,17 +89,13 @@ function createListenForActions(store, stateFunc, actionListFunc, blacklistedAct
           if (_.isEqual(actionListTypes, expectedActionTypes)) {
             resolve(stateFunc(store.getState()));
           } else if (actionListTypes.length > expectedActionTypes.length) {
-            console.error("Expected actions vs actual", expectedActionTypes, actionListTypes);
-            assert.fail(actionListTypes, expectedActionTypes, "Received more actions than expected");
+            reject(new Error("Received more actions than expected: actionListTypes: " +
+              JSON.stringify(actionListTypes) + ", expectedActionTypes: " + JSON.stringify(expectedActionTypes)));
           }
         });
 
         callback();
       }
-    }).catch(e => {
-      // Make sure we don't accidentally silence errors
-      console.error(e);
-      return Promise.reject(e);
     });
   };
 }
