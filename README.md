@@ -9,6 +9,7 @@ Functions to assert dispatched actions in redux
 In your testing code:
 
     import configureTestStore from 'redux-asserts';
+    import rootReducer from '../reducers';
 
  - Create a redux store for testing using `configureTestStore`
  - Use that store's `createDispatchThen` and `createListenForActions` functions to assert that actions were called.
@@ -18,8 +19,9 @@ In your testing code:
 Example:
 
     describe('course reducers', () => {
-      let dispatchThen;
+      let dispatchThen, store;
       beforeEach(() => {
+        store = configureTestStore(rootReducer);
         dispatchThen = store.createDispatchThen(state => state.courseList);
       });
   
@@ -44,7 +46,7 @@ Example:
     describe('cart rendering', () => {
       let listenForActions, store;
       beforeEach(() => {
-        store = configureTestStore(reducer);
+        store = configureTestStore(rootReducer);
         listenForActions = store.createListenForActions();
       });
 
