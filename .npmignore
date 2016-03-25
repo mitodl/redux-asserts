@@ -3,3 +3,4 @@ lib/
 test/
 .idea
 *~
+npm-debug.log
