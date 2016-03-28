@@ -72,4 +72,26 @@ describe('dispatchThen', () => {
       done();
     }, 100);
   });
+
+  it("should unsubscribe any previous dispatchThen subscribers if called twice", done => {
+    dispatchThen(updateCheckbox(true), [UPDATE_CHECKBOX, CHECKBOX_UPDATED]).then(checkbox => {
+      assert.ok(checkbox.checked);
+
+      dispatchThen(updateCheckbox(false), [UPDATE_CHECKBOX, CHECKBOX_UPDATED]).then(checkbox => {
+        assert.ok(!checkbox.checked);
+
+        done();
+      });
+    });
+  });
+
+  it('should resolve immediately if there are no actions to assert', done => {
+    dispatchThen(updateCheckbox(true), []).then(checkbox => {
+      // The action has been dispatched but we never yielded control to let
+      // the reducer alter state
+      assert.ok(!checkbox.checked);
+
+      done();
+    });
+  });
 });

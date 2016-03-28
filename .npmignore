@@ -3,3 +3,4 @@ test/
 .idea
 *~
 npm-debug.log
+coverage/
