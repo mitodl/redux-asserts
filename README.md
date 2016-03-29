@@ -1,5 +1,12 @@
 ## redux-asserts
-Functions to assert dispatched actions in redux
+Functions to assert dispatched actions in redux. These functions are aimed at making
+integration testing with redux easier by abstracting away the need to manage and listen to the store's
+actions.
+
+## How it works
+A redux store is created with a wrapper that listens for actions dispatched to it. The assert functions
+return a `Promise` which resolves when all expected action types are received, or rejects when an unexpected
+action type is received.
 
 ## Installation
 
@@ -20,7 +27,7 @@ create the `listenForActions` and `dispatchThen` functions respectively.
 
 ### listenForActions
 
-Asserts that a list of actions were called during the execution of the callback,
+Asserts that a list of actions were called during or after the execution of the callback,
 then resolves the `Promise`. The `Promise` will reject on an assertion error, but
 note that there are cases where the `Promise` may resolve earlier than the user would want,
 or the `Promise` may never be resolved or rejected.
@@ -70,10 +77,10 @@ See also the examples in the test directory.
 
 ### dispatchThen
 
-Dispatches an action or action creator, then asserts a list of action types were called,
-then resolves the `Promise`. The `Promise` will reject on an assertion error, but
-there are cases where the `Promise` may resolve earlier than the user would want,
-or the `Promise` may never be resolved or rejected.
+Dispatches an action or action creator, then asserts a list of action types were called
+after the dispatch of the action, then resolves the `Promise`. The `Promise` will
+reject on an assertion error, but there are cases where the `Promise`
+may resolve earlier than the user would want, or the `Promise` may never be resolved or rejected.
 
 Note that this function is exactly the same as `listenForActions` but where the callback is
 
@@ -96,21 +103,15 @@ action types are asserted.
 Example:
 
     describe('course reducers', () => {
-      let dispatchThen, store, courseListStub, sandbox;
+      let dispatchThen, store;
       beforeEach(() => {
         // Create a redux store for testing
         store = configureTestStore(rootReducer);
         // Create the dispatchThen function we use below
         dispatchThen = store.createDispatchThen(state => state.courseList);
-
-        // Stub API function to return our test data
-        sandbox = sinon.sandbox.create();
-        courseListStub = sinon.stub(api, 'getCourseList');
       });
   
       it('should fetch a list of courses successfully', done => {
-        courseListStub.returns(Promise.resolve(COURSE_LIST_DATA));
-  
         dispatchThen(fetchCourseList(), [REQUEST_COURSE_LIST, RECEIVE_COURSE_LIST_SUCCESS]).then(courseState => {
           assert.deepEqual(courseState.courseList, COURSE_LIST_DATA);
           assert.equal(courseState.courseListStatus, FETCH_SUCCESS);
