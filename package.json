@@ -1,6 +1,6 @@
 {
   "name": "redux-asserts",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Functions to assert dispatched actions in redux",
   "author": "George Schneeloch <gschneel@mit.edu>",
   "repository": {
@@ -49,7 +49,6 @@
     "react-redux": "^4.4.1"
   },
   "dependencies": {
-    "assert": "^1.3.0",
     "lodash": "^4.6.1",
     "redux": "^3.3.1",
     "redux-thunk": "^2.0.1"
