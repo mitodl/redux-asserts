@@ -2,7 +2,6 @@
 require('jsdom-global')();
 
 import React from 'react';
-import ReactDOM from 'react-dom';
 import TestUtils from 'react-addons-test-utils';
 import assert from 'assert';
 import { Provider } from 'react-redux';
@@ -26,12 +25,12 @@ describe('listenForActions', () => {
     );
   });
 
-  it('clicks a checkbox', done => {
+  it('clicks a checkbox', () => {
     assert.deepEqual(store.getState().checkbox, {
       checked: false
     });
     let checkbox = TestUtils.findRenderedDOMComponentWithTag(component, "input");
-    listenForActions([UPDATE_CHECKBOX, CHECKBOX_UPDATED], () => {
+    return listenForActions([UPDATE_CHECKBOX, CHECKBOX_UPDATED], () => {
       TestUtils.Simulate.change(checkbox, {
         target: {
           checked: true
@@ -42,13 +41,12 @@ describe('listenForActions', () => {
       // so state is just store.getState()
       assert.deepEqual(store.getState(), state);
       assert.ok(state.checkbox.checked);
-      done();
     });
   });
 
-  it('ignores the order of action types', done => {
+  it('ignores the order of action types', () => {
     let checkbox = TestUtils.findRenderedDOMComponentWithTag(component, "input");
-    listenForActions([CHECKBOX_UPDATED, UPDATE_CHECKBOX], () => {
+    return listenForActions([CHECKBOX_UPDATED, UPDATE_CHECKBOX], () => {
       TestUtils.Simulate.change(checkbox, {
         target: {
           checked: true
@@ -56,13 +54,12 @@ describe('listenForActions', () => {
       });
     }).then(state => {
       assert.ok(state.checkbox.checked);
-      done();
     });
   });
 
-  it('should handle duplicate action types', done => {
+  it('should handle duplicate action types', () => {
     let checkbox = TestUtils.findRenderedDOMComponentWithTag(component, "input");
-    listenForActions([UPDATE_CHECKBOX, CHECKBOX_UPDATED, UPDATE_CHECKBOX, CHECKBOX_UPDATED], () => {
+    return listenForActions([UPDATE_CHECKBOX, CHECKBOX_UPDATED, UPDATE_CHECKBOX, CHECKBOX_UPDATED], () => {
       TestUtils.Simulate.change(checkbox, {
         target: {
           checked: true
@@ -75,22 +72,20 @@ describe('listenForActions', () => {
       });
     }).then(state => {
       assert.ok(!state.checkbox.checked);
-      done();
     });
   });
 
-  it('rejects the promise because an action type is missing', done => {
+  it('rejects the promise because an action type is missing', () => {
     assert.deepEqual(store.getState().checkbox, {
       checked: false
     });
     let checkbox = TestUtils.findRenderedDOMComponentWithTag(component, "input");
-    listenForActions([CHECKBOX_UPDATED], () => {
+    return listenForActions([CHECKBOX_UPDATED], () => {
       TestUtils.Simulate.change(checkbox);
     }).catch(e => {
       assert.equal(e.message, 'Received more actions than expected: ' +
         'actionListTypes: ["CHECKBOX_UPDATED","UPDATE_CHECKBOX"], ' +
         'expectedActionTypes: ["CHECKBOX_UPDATED"]');
-      done();
     });
   });
 
@@ -129,5 +124,46 @@ describe('listenForActions', () => {
       // All actions should have been received by now
       done();
     }, 100);
+  });
+
+  it('rejects a promise if an error was thrown after all actions were dispatched', done => {
+    assert.deepEqual(store.getState().checkbox, {
+      checked: false
+    });
+    let checkbox = TestUtils.findRenderedDOMComponentWithTag(component, "input");
+    listenForActions([UPDATE_CHECKBOX], () => {
+      TestUtils.Simulate.change(checkbox, {
+        target: {
+          checked: true
+        }
+      });
+      // UPDATE_CHECKBOX has been received but listenForActions will wait until this
+      // callback is done to ensure any errors are thrown
+      throw new Error("test error was thrown");
+    }).catch(error => {
+      assert.equal("test error was thrown", error.message);
+      done();
+    });
+  });
+
+  it('rejects a promise if an extra action was dispatched', done => {
+    assert.deepEqual(store.getState().checkbox, {
+      checked: false
+    });
+    let checkbox = TestUtils.findRenderedDOMComponentWithTag(component, "input");
+    listenForActions([UPDATE_CHECKBOX], () => {
+      TestUtils.Simulate.change(checkbox, {
+        target: {
+          checked: true
+        }
+      });
+      // UPDATE_CHECKBOX has been received but listenForActions will wait until this
+      // callback is done to ensure any errors are thrown
+      store.dispatch({ type: CHECKBOX_UPDATED, payload: true });
+    }).catch(error => {
+      assert.equal('Received more actions than expected: actionListTypes: ["CHECKBOX_UPDATED","UPDATE_CHECKBOX"], ' +
+        'expectedActionTypes: ["UPDATE_CHECKBOX"]', error.message);
+      done();
+    });
   });
 });

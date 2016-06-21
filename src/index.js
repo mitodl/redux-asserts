@@ -83,7 +83,9 @@ function createListenForActions(store, stateFunc, actionListFunc, blacklistedAct
 
         resolve(stateFunc(store.getState()));
       } else {
-        unsubscribe = store.subscribe(() => {
+        let callbackRan = false;
+
+        let resolver = () => {
           // Get current action list
           let actionListTypes = actionTypesFunc();
           if (_.isEqual(actionListTypes, expectedActionTypes)) {
@@ -92,9 +94,20 @@ function createListenForActions(store, stateFunc, actionListFunc, blacklistedAct
             reject(new Error("Received more actions than expected: actionListTypes: " +
               JSON.stringify(actionListTypes) + ", expectedActionTypes: " + JSON.stringify(expectedActionTypes)));
           }
+        };
+
+        unsubscribe = store.subscribe(() => {
+          if (callbackRan) {
+            // wait until after callback() completes to resolve so we can detect thrown errors
+            // and actions which shouldn't have been dispatched
+            resolver();
+          }
         });
 
         callback();
+        callbackRan = true;
+        // If already resolved, this should get ignored
+        resolver();
       }
     });
   };
