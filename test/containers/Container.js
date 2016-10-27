@@ -20,8 +20,6 @@ class Container extends React.Component {
   }
 }
 
-export default Container;
-
 Container.propTypes = {
   dispatch: React.PropTypes.func.isRequired,
   checkbox: React.PropTypes.object.isRequired

@@ -57,8 +57,21 @@ describe('dispatchThen', () => {
 
   it("should reject the promise if the action types don't match", done => {
     dispatchThen(updateCheckbox(true), ['missing']).catch(e => {
-      assert.equal(e.message, 'Received more actions than expected: actionListTypes: ' +
-        '["CHECKBOX_UPDATED","UPDATE_CHECKBOX"], expectedActionTypes: ["missing"]');
+      assert.equal(e.message, `ReduxAsserts: didn't receive the expected actions
+
+Unexpected actions:
+[
+    CHECKBOX_UPDATED,
+    UPDATE_CHECKBOX,
+]
+
+
+Expected, unreceived actions:
+[
+    missing,
+]
+
+`);
       done();
     });
   });

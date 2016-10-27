@@ -91,8 +91,7 @@ function createListenForActions(store, stateFunc, actionListFunc, blacklistedAct
           if (_.isEqual(actionListTypes, expectedActionTypes)) {
             resolve(stateFunc(store.getState()));
           } else if (actionListTypes.length > expectedActionTypes.length) {
-            reject(new Error("Received more actions than expected: actionListTypes: " +
-              JSON.stringify(actionListTypes) + ", expectedActionTypes: " + JSON.stringify(expectedActionTypes)));
+            reject(new Error(formatActionErrors(expectedActionTypes, actionListTypes)));
           }
         };
 
@@ -145,3 +144,32 @@ export default function configureTestStore(rootReducer, initialState, blackliste
   );
   return store;
 }
+
+const arrayDiff = (xs, ys) => xs.filter(x => ys.indexOf(x) < 0);
+
+const formatActions = xs => xs.map(x => `    ${x},`);
+
+const formatActionErrors = (expected, received) => {
+  let lines = [
+    "ReduxAsserts: didn't receive the expected actions\n"
+  ];
+
+  let unexpected = arrayDiff(received,expected);
+  if (unexpected.length !== 0) {
+    lines = lines.concat(
+      "Unexpected actions:",
+      "[", formatActions(unexpected), "]",
+      "\n"
+    );
+  }
+
+  let unreceived = arrayDiff(expected, received);
+  if (unreceived.length !== 0) {
+    lines = lines.concat(
+      "Expected, unreceived actions:",
+      "[", formatActions(unreceived), "]",
+      "\n"
+    );
+  }
+  return lines.join('\n');
+};

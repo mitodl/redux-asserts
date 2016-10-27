@@ -83,9 +83,15 @@ describe('listenForActions', () => {
     return listenForActions([CHECKBOX_UPDATED], () => {
       TestUtils.Simulate.change(checkbox);
     }).catch(e => {
-      assert.equal(e.message, 'Received more actions than expected: ' +
-        'actionListTypes: ["CHECKBOX_UPDATED","UPDATE_CHECKBOX"], ' +
-        'expectedActionTypes: ["CHECKBOX_UPDATED"]');
+      let expectation = `ReduxAsserts: didn't receive the expected actions
+
+Unexpected actions:
+[
+    UPDATE_CHECKBOX,
+]
+
+`;
+      assert.equal(e.message, expectation);
     });
   });
 
@@ -161,8 +167,14 @@ describe('listenForActions', () => {
       // callback is done to ensure any errors are thrown
       store.dispatch({ type: CHECKBOX_UPDATED, payload: true });
     }).catch(error => {
-      assert.equal('Received more actions than expected: actionListTypes: ["CHECKBOX_UPDATED","UPDATE_CHECKBOX"], ' +
-        'expectedActionTypes: ["UPDATE_CHECKBOX"]', error.message);
+      assert.equal(error.message, `ReduxAsserts: didn't receive the expected actions
+
+Unexpected actions:
+[
+    CHECKBOX_UPDATED,
+]
+
+`);
       done();
     });
   });

@@ -22,7 +22,9 @@
   "scripts": {
     "compile": "babel --optional runtime -d lib/ src/",
     "prepublish": "npm run compile",
-    "test": "eslint src test && istanbul cover --report html _mocha -- test/**/*_test.js --opts mocha.opts"
+    "lint": "eslint src test",
+    "test": "mocha --compilers js:babel-core/register test/**/*_test.js",
+    "coverage": "istanbul cover --report html _mocha -- test/**/*_test.js --opts mocha.opts"
   },
   "devDependencies": {
     "babel-cli": "^6.6.5",
