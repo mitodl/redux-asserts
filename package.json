@@ -1,6 +1,6 @@
 {
   "name": "redux-asserts",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Functions to assert dispatched actions in redux",
   "author": "George Schneeloch <gschneel@mit.edu>",
   "repository": {
