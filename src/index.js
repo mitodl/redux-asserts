@@ -145,7 +145,19 @@ export default function configureTestStore(rootReducer, initialState, blackliste
   return store;
 }
 
-const arrayDiff = (xs, ys) => xs.filter(x => ys.indexOf(x) < 0);
+// returns xs - ys
+export const arrayDiff = (xs, ys) => {
+  const _ys = ys.concat();
+
+  return xs.map(x => {
+    let index = _ys.indexOf(x);
+    if (index < 0) {
+      return x;
+    } else {
+      _ys.splice(index, 1);
+    }
+  }).filter(x => x !== undefined);
+};
 
 const formatActions = xs => xs.map(x => `    ${x},`);
 
