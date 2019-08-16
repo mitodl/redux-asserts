@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import {
   updateCheckbox
@@ -21,8 +22,8 @@ class Container extends React.Component {
 }
 
 Container.propTypes = {
-  dispatch: React.PropTypes.func.isRequired,
-  checkbox: React.PropTypes.object.isRequired
+  dispatch: PropTypes.func.isRequired,
+  checkbox: PropTypes.object.isRequired
 };
 
 const mapStateToProps = (state) => {
