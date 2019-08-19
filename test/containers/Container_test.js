@@ -2,7 +2,7 @@
 require('jsdom-global')();
 
 import React from 'react';
-import TestUtils from 'react-addons-test-utils';
+import TestUtils from 'react-dom/test-utils';
 import assert from 'assert';
 import { Provider } from 'react-redux';
 
