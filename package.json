@@ -45,8 +45,8 @@
     "jsdom-global": "1.7.0",
     "mocha": "2.5.3",
     "object-assign": "4.1.1",
-    "react": "16.14.0",
-    "react-dom": "16.14.0",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
     "react-redux": "7.2.9"
   },
   "dependencies": {
